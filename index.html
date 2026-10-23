@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Árajánlat-kalkulátor</title>
+
+  <!-- Telepíthető app (PWA): név, ikon, szín -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1f5eff">
+  <link rel="icon" href="icon-192.png">
+  <!-- iPhone: kezdőképernyő ikon és teljes képernyős mód -->
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Árajánlat">
+
+  <!-- Betűtípusok a Google Fontsról (ha nincs internet, a rendszer betűtípusát használja) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="top">
+    <div>
+      <h1>Árajánlat-kalkulátor</h1>
+      <p class="sub">Töltsd ki a tételeket, és kész az ajánlat, amit megmutathatsz az ügyfélnek: tételesen látszik rajta, mire megy a pénz. Az árak példák, írd át őket a sajátjaidra. A böngésző megjegyzi őket.</p>
+    </div>
+    <button id="installButton" class="hidden">📲 Telepítés appként</button>
+  </header>
+
+  <div class="wrap">
+    <!-- ============ BAL OLDAL: beállítások ============ -->
+    <section class="panel" aria-label="Beállítások">
+      <div>
+        <h2>Alapadatok</h2>
+        <div class="fields">
+          <label class="field"><span class="label">A te neved / márkád</span><input id="me" value="AlexFPV"></label>
+          <label class="field"><span class="label">Elérhetőség</span><input id="contact" value="alexcmedia1@gmail.com · 0755 283 900"></label>
+          <label class="field"><span class="label">Ügyfél</span><input id="client" value="" placeholder="Ügyfél neve"></label>
+          <label class="field"><span class="label">Projekt</span><input id="project" value="" placeholder="pl. FPV house tour – helyszín"></label>
+          <label class="field"><span class="label">Pénznem</span>
+            <select id="cur"><option>RON</option><option>EUR</option><option>HUF</option></select></label>
+          <label class="field"><span class="label">Ajánlat érvényes (nap)</span><input id="valid" type="number" min="1" value="30"></label>
+        </div>
+      </div>
+
+      <div>
+        <h2>Kezdő sablon</h2>
+        <div class="presets" id="presets"></div>
+        <p class="hint">A sablon lecseréli a tételeket. Utána bármit átírhatsz.</p>
+      </div>
+
+      <div>
+        <h2>Tételek</h2>
+        <div class="rowhead"><span class="label">Kategória</span><span class="label">Megnevezés</span><span class="label">Menny.</span><span class="label">Egység</span><span class="label">Egységár</span><span></span></div>
+        <div class="rows" id="rows"></div>
+        <div class="actions"><button id="add">+ Új tétel</button></div>
+      </div>
+
+      <div>
+        <h2>Kiszállás és módosítók</h2>
+        <div class="fields">
+          <label class="field"><span class="label">Távolság oda-vissza (km)</span><input id="km" type="number" min="0" value="40"></label>
+          <label class="field"><span class="label">Díj / km</span><input id="kmrate" type="number" min="0" step="0.1" value="1.5"></label>
+          <label class="field"><span class="label">Sürgős leadás felár (%)</span><input id="rush" type="number" min="0" value="0"></label>
+          <label class="field"><span class="label">Kedvezmény (%)</span><input id="disc" type="number" min="0" max="100" value="0"></label>
+        </div>
+      </div>
+
+      <div>
+        <h2>Megjegyzés az ügyfélnek</h2>
+        <textarea id="note">Az ár tartalmaz 1 javítási kört. A nyers felvételeket nem adom ki. Rossz idő (szél, eső) esetén a repülést új időpontra tesszük, felár nélkül.</textarea>
+      </div>
+    </section>
+
+    <!-- ============ JOBB OLDAL: az ajánlat, amit az ügyfél lát ============ -->
+    <article class="sheet" id="sheet" aria-label="Árajánlat">
+      <div class="sheet-head">
+        <div><div class="brand" id="o-me"></div><div class="contact" id="o-contact"></div></div>
+        <div class="meta"><span id="o-no"></span><span id="o-date"></span><span id="o-valid"></span></div>
+      </div>
+      <div class="doc-title">Árajánlat</div>
+      <p class="client">Ügyfél: <strong id="o-client"></strong> · <span id="o-project"></span></p>
+
+      <div class="dist">
+        <div class="label">Mire megy a pénz</div>
+        <div class="bar" id="bar"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Tétel</th><th class="n">Menny.</th><th class="n">Egységár</th><th class="n">Összeg</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="totals" id="totals"></div>
+      <div class="why" id="why"></div>
+      <div class="foot" id="o-note"></div>
+
+      <div class="actions no-print">
+        <button class="primary" id="print">🖨️ Nyomtatás / PDF</button>
+        <button id="copy">Másolás szövegként</button>
+        <span class="toast" id="toast" aria-live="polite"></span>
+      </div>
+    </article>
+  </div>
+
+  <!-- A sorrend számít: előbb az adatok, aztán a logika, végül az app-telepítés -->
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+  <script src="pwa.js"></script>
+</body>
+</html>

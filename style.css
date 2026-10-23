@@ -1,0 +1,183 @@
+/* =====================================================
+   Árajánlat-kalkulátor – kinézet
+   Elrendezés: bal oldalt a beállítások, jobb oldalt a "papír" (az ajánlat).
+   Telefonon (keskeny képernyőn) a kettő egymás alá kerül.
+   ===================================================== */
+
+/* ---- Színek változókban: így egy helyen lehet mindent átállítani ---- */
+:root {
+  --bg: #e9ecef;
+  --panel: #f7f8fa;
+  --paper: #ffffff;
+  --ink: #15191f;
+  --muted: #5d6673;
+  --line: #d3d8df;
+  --accent: #1f5eff;
+  --accent-soft: #e3ebff;
+  /* kategóriák színei */
+  --c1: #1f5eff; --c2: #f08a24; --c3: #14a37f; --c4: #9b51e0; --c5: #e0455b; --c6: #7a8494;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+
+/* ---- Sötét mód: ha a telefon/gép sötét témára van állítva ---- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1216; --panel: #171b21; --paper: #1d222a; --ink: #e8ebef; --muted: #98a1ad; --line: #2c333d;
+    --accent: #6f9bff; --accent-soft: #1d2a47;
+    --c1: #6f9bff; --c2: #f5a54f; --c3: #3cc79f; --c4: #b685ef; --c5: #f0717f; --c6: #8d97a6;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+.hidden { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  /* env(safe-area-inset-...) = iPhone "notch" és alsó csík miatti hely */
+  padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(48px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+
+/* ---- Fejléc ---- */
+header.top {
+  max-width: 1280px; margin: 0 auto 20px;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;
+}
+h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.7rem, 3.5vw, 2.4rem); margin: 0; letter-spacing: -0.02em; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 62ch; }
+
+/* ---- Két oszlopos rács ---- */
+.wrap {
+  max-width: 1280px; margin: 0 auto;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 24px; align-items: start;
+}
+@media (max-width: 920px) { .wrap { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---- Bal panel ---- */
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 22px; min-width: 0; }
+.panel h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; margin: 0 0 10px; }
+.label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+
+input, select, textarea {
+  font: inherit; color: var(--ink); background: var(--paper);
+  border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; width: 100%; min-width: 0;
+}
+textarea { resize: vertical; min-height: 70px; }
+input[type=number] { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); padding: 8px 12px; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+#installButton { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+
+.presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.preset.on { background: var(--accent-soft); border-color: var(--accent); }
+.hint { font-size: 0.82rem; color: var(--muted); margin: 6px 0 0; }
+
+/* ---- Egy tétel sora (kategória, név, mennyiség, egység, ár, törlés) ---- */
+.rows { display: grid; gap: 10px; }
+.row, .rowhead { display: grid; grid-template-columns: 130px minmax(0, 1fr) 70px 80px 90px 34px; gap: 6px; }
+.rowhead { padding: 0 11px; margin-bottom: 4px; }
+.row { align-items: start; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.row .desc { grid-column: 2 / 6; }
+.row .x { padding: 6px 0; width: 34px; color: var(--muted); background: transparent; }
+
+/* Telefonon a sor 3 oszlopra törik */
+@media (max-width: 640px) {
+  .rowhead { display: none; }
+  .row { grid-template-columns: 1fr 1fr 1fr; }
+  .row .cat { grid-column: 1 / 3; }
+  .row .x { grid-column: 3; grid-row: 1; justify-self: end; }
+  .row .name, .row .desc { grid-column: 1 / -1; }
+}
+
+/* ---- A "papír": az ajánlat ---- */
+.sheet {
+  background: var(--paper); border: 1px solid var(--line); border-radius: 4px;
+  box-shadow: 0 12px 32px -18px rgba(10, 20, 40, .35);
+  padding: clamp(18px, 4vw, 40px); min-width: 0;
+  position: sticky; top: 16px; /* görgetéskor a helyén marad */
+}
+@media (max-width: 920px) { .sheet { position: static; } }
+
+.sheet-head { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-bottom: 2px solid var(--ink); padding-bottom: 14px; }
+.brand { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; letter-spacing: -0.02em; line-height: 1.1; }
+.contact { color: var(--muted); margin-top: 4px; }
+.meta { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); text-align: right; display: grid; gap: 2px; }
+.doc-title { font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; margin: 18px 0 2px; }
+.client { color: var(--muted); margin: 0 0 18px; }
+.client strong { color: var(--ink); font-weight: 600; }
+
+/* Színes sáv: melyik kategória hány % */
+.dist { margin: 6px 0 22px; }
+.dist .label { display: block; margin-bottom: 6px; }
+.bar { display: flex; height: 14px; border-radius: 3px; overflow: hidden; background: var(--line); }
+.bar span { display: block; height: 100%; transition: width .25s ease; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font-size: 0.82rem; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.legend b { font-family: var(--font-mono); font-weight: 500; }
+
+/* Táblázat */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; padding: 6px; border-bottom: 1px solid var(--line); }
+th.n, td.n { text-align: right; white-space: nowrap; font-family: var(--font-mono); }
+td { padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr.cat td { border-bottom: none; padding-top: 16px; padding-bottom: 2px; font-weight: 600; font-size: 0.85rem; }
+tr.cat .sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 8px; vertical-align: 1px; }
+td .d { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+
+/* Telefonon: kisebb betű, és az egységár oszlop elrejtve, hogy kiférjen */
+@media (max-width: 520px) {
+  table { font-size: 0.85rem; }
+  th:nth-child(3), td:nth-child(3) { display: none; }
+  td, th { padding-left: 4px; padding-right: 4px; }
+}
+
+/* Végösszeg */
+.totals { margin-left: auto; width: min(100%, 330px); margin-top: 16px; display: grid; gap: 4px; }
+.totals div { display: flex; justify-content: space-between; gap: 12px; font-size: 0.92rem; }
+.totals div span:last-child { font-family: var(--font-mono); }
+.totals .grand { border-top: 2px solid var(--ink); margin-top: 6px; padding-top: 10px; font-family: var(--font-display); font-weight: 800; font-size: 1.35rem; }
+.totals .grand span:last-child { font-family: var(--font-display); }
+
+.why { margin-top: 26px; padding: 14px 16px; background: var(--accent-soft); border-radius: 6px; font-size: 0.88rem; }
+.why h3 { margin: 0 0 6px; font-size: 0.9rem; font-family: var(--font-display); font-weight: 600; }
+.why ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+.foot { margin-top: 18px; font-size: 0.8rem; color: var(--muted); white-space: pre-line; }
+
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; align-items: center; }
+.toast { font-size: 0.85rem; color: var(--c3); }
+
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+
+/* =====================================================
+   NYOMTATÁS / PDF: csak a "papír" látszik, fehér háttéren
+   ===================================================== */
+@media print {
+  :root {
+    --bg: #fff; --paper: #fff; --ink: #000; --muted: #555; --line: #ccc; --accent-soft: #eef2ff;
+    --c1: #1f5eff; --c2: #f08a24; --c3: #14a37f; --c4: #9b51e0; --c5: #e0455b; --c6: #7a8494;
+    color-scheme: light;
+  }
+  @page { margin: 14mm; }
+  body { padding: 0; background: #fff; }
+  header.top, .panel, .no-print { display: none !important; }
+  .wrap { display: block; max-width: none; }
+  .sheet { position: static; box-shadow: none; border: none; padding: 0; }
+  /* a színes sáv és a kék doboz nyomtatásban is színes legyen */
+  .bar, .bar span, .legend i, .why, tr.cat .sw { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  tr { break-inside: avoid; }
+  tr.cat { break-after: avoid; }
+  th:nth-child(3), td:nth-child(3) { display: table-cell !important; }
+}
