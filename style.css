@@ -77,6 +77,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 
 button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); padding: 8px 12px; }
 button:hover { border-color: var(--accent); }
+button:disabled { opacity: .6; cursor: progress; }
 button.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
 #installButton { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
 
@@ -84,21 +85,41 @@ button.primary { background: var(--accent); color: #fff; border-color: var(--acc
 .preset.on { background: var(--accent-soft); border-color: var(--accent); }
 .hint { font-size: 0.82rem; color: var(--muted); margin: 6px 0 0; }
 
-/* ---- Egy tétel sora (kategória, név, mennyiség, egység, ár, törlés) ---- */
+/* ---- Egy tétel sora ----
+   1. sor: megnevezés (széles) + törlés gomb
+   2. sor: kategória, mennyiség, egység, egységár
+   3. sor: magyarázat az ügyfélnek */
 .rows { display: grid; gap: 10px; }
-.row, .rowhead { display: grid; grid-template-columns: 130px minmax(0, 1fr) 70px 80px 90px 34px; gap: 6px; }
-.rowhead { padding: 0 11px; margin-bottom: 4px; }
-.row { align-items: start; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
-.row .desc { grid-column: 2 / 6; }
-.row .x { padding: 6px 0; width: 34px; color: var(--muted); background: transparent; }
+.rowhead { display: none; }
+.row {
+  display: grid; gap: 6px; align-items: start;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, .7fr) minmax(0, .8fr) minmax(0, .9fr) 34px;
+  grid-template-areas:
+    "name name name name x"
+    "cat  qty  unit price price"
+    "desc desc desc desc desc";
+  padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper);
+}
+.row .name { grid-area: name; font-weight: 500; }
+.row .cat { grid-area: cat; }
+.row .qty { grid-area: qty; }
+.row .unit { grid-area: unit; }
+.row .price { grid-area: price; }
+.row .desc { grid-area: desc; }
+.mini { display: grid; gap: 2px; min-width: 0; }
+.mini span { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+.row .x { align-self: start; grid-area: x; padding: 6px 0; width: 34px; color: var(--muted); background: transparent; }
 
-/* Telefonon a sor 3 oszlopra törik */
+/* Telefonon a kategória külön sorba kerül */
 @media (max-width: 640px) {
-  .rowhead { display: none; }
-  .row { grid-template-columns: 1fr 1fr 1fr; }
-  .row .cat { grid-column: 1 / 3; }
-  .row .x { grid-column: 3; grid-row: 1; justify-self: end; }
-  .row .name, .row .desc { grid-column: 1 / -1; }
+  .row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 34px;
+    grid-template-areas:
+      "name name name x"
+      "cat  cat  cat  cat"
+      "qty  unit price price"
+      "desc desc desc desc";
+  }
 }
 
 /* ---- A "papír": az ajánlat ---- */
@@ -162,6 +183,107 @@ td .d { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 2px
 @media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
 
 /* =====================================================
+   INDULÁS: betöltés -> belépés -> az app
+   A <body> osztálya dönti el, mi látszik:
+     loading = még töltődik a Firebase
+     locked  = nem vagy belépve (csak a belépő ablak látszik)
+   ===================================================== */
+.splash, .gate { display: none; }
+body.loading .splash { display: grid; place-items: center; min-height: 60vh; color: var(--muted); font-family: var(--font-display); font-weight: 600; font-size: 1.2rem; }
+body.loading header.top, body.loading #view-editor, body.loading #view-jobs,
+body.locked header.top, body.locked #view-editor, body.locked #view-jobs { display: none !important; }
+body.locked .gate { display: grid; place-items: start center; padding-top: 8vh; }
+.gate .login { width: min(100%, 420px); }
+.gate-brand { font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; letter-spacing: -0.02em; }
+
+/* =====================================================
+   FÜLEK és MUNKÁIM
+   ===================================================== */
+.tabs { display: flex; gap: 4px; margin-top: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 4px; width: fit-content; }
+.tab { border: none; background: transparent; padding: 7px 14px; border-radius: 6px; font-weight: 600; color: var(--muted); }
+.tab.on { background: var(--accent); color: #fff; }
+.tab .count { font-family: var(--font-mono); font-weight: 500; opacity: .85; }
+
+/* állapot színek (a semleges szín a kategóriák szürkéje) */
+:root { --good: #14a37f; --warn: #d9771c; --bad: #e0455b; --info: #1f5eff; --neutral: #7a8494; }
+@media (prefers-color-scheme: dark) { :root { --good: #3cc79f; --warn: #f5a54f; --bad: #f0717f; --info: #6f9bff; --neutral: #8d97a6; } }
+.good-text { color: var(--good); }
+.warn-text { color: var(--warn); }
+
+/* logó */
+h1, .gate-brand { display: flex; align-items: center; gap: 12px; }
+h1 .logo { width: 1.15em; height: 1.15em; border-radius: 22%; }
+.gate-brand .logo { width: 40px; height: 40px; border-radius: 22%; }
+.brand-wrap { display: flex; gap: 12px; align-items: center; }
+.sheet-logo { width: 48px; height: 48px; border-radius: 22%; flex: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+/* nyelvválasztók */
+.top-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.langs { display: inline-flex; gap: 2px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 3px; }
+.langs button { border: none; background: transparent; padding: 5px 9px; font-size: 0.8rem; font-weight: 600; color: var(--muted); border-radius: 5px; font-family: var(--font-mono); }
+.langs button.on { background: var(--ink); color: var(--paper); }
+.gate-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.doclang-box { display: grid; gap: 6px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.doclang-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.doclang-box .hint { margin: 0; }
+.seg { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.seg button { padding: 6px 10px; font-size: 0.88rem; }
+.seg button.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.lang-badge { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; vertical-align: 2px; }
+
+.editbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; border-radius: 8px; background: var(--accent-soft); border: 1px solid var(--accent); font-size: 0.9rem; }
+
+.jobs { max-width: 1000px; margin: 0 auto; display: grid; gap: 16px; }
+.login { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: grid; gap: 12px; max-width: 440px; }
+.login h2 { font-family: var(--font-display); font-weight: 600; margin: 0; font-size: 1.2rem; }
+.msg { margin: 0; font-size: 0.9rem; color: var(--muted); }
+.msg.error { color: var(--bad); }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.stat { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 2px; }
+.stat b { font-family: var(--font-display); font-weight: 800; font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+.stat small { color: var(--muted); font-size: 0.8rem; }
+
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+.toolbar input { flex: 1 1 220px; }
+.toolbar select { flex: 0 1 220px; }
+
+.job-list { display: grid; gap: 10px; }
+.job {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px;
+  background: var(--paper); border: 1px solid var(--line); border-left: 4px solid var(--neutral);
+  border-radius: 8px; padding: 14px 16px;
+}
+.job.st-info { border-left-color: var(--info); }
+.job.st-warn { border-left-color: var(--warn); }
+.job.st-good { border-left-color: var(--good); }
+.job.st-bad { border-left-color: var(--bad); opacity: .75; }
+.job.editing { box-shadow: 0 0 0 2px var(--accent); }
+.job-main { min-width: 0; }
+.job-title { font-weight: 600; font-size: 1.05rem; overflow-wrap: anywhere; }
+.job-project { color: var(--muted); overflow-wrap: anywhere; }
+.job-meta { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+.job-total { font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+.job-actions { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
+.job-status { width: auto; flex: 0 1 220px; font-weight: 600; }
+.job.st-info .job-status { color: var(--info); }
+.job.st-warn .job-status { color: var(--warn); }
+.job.st-good .job-status { color: var(--good); }
+.job.st-bad .job-status { color: var(--bad); }
+.confirm { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 0.9rem; }
+button.danger { background: var(--bad); border-color: var(--bad); color: #fff; font-weight: 600; }
+button.ghost-danger { color: var(--bad); background: transparent; }
+.linklike { border: none; background: none; padding: 0; color: var(--accent); text-decoration: underline; }
+.empty { background: var(--panel); border: 1px dashed var(--line); border-radius: 8px; padding: 20px; color: var(--muted); text-align: center; margin: 0; }
+.empty b { color: var(--ink); }
+.jobs-foot { color: var(--muted); font-size: 0.85rem; margin: 0; }
+
+@media (max-width: 520px) {
+  .job { grid-template-columns: minmax(0, 1fr); }
+  .job-total { text-align: left; }
+}
+
+/* =====================================================
    NYOMTATÁS / PDF: csak a "papír" látszik, fehér háttéren
    ===================================================== */
 @media print {
@@ -172,7 +294,7 @@ td .d { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 2px
   }
   @page { margin: 14mm; }
   body { padding: 0; background: #fff; }
-  header.top, .panel, .no-print { display: none !important; }
+  header.top, .panel, .no-print, .jobs { display: none !important; }
   .wrap { display: block; max-width: none; }
   .sheet { position: static; box-shadow: none; border: none; padding: 0; }
   /* a színes sáv és a kék doboz nyomtatásban is színes legyen */

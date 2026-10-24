@@ -1,7 +1,7 @@
 {
-  "name": "Árajánlat-kalkulátor",
-  "short_name": "Árajánlat",
-  "description": "Tételes árajánlat videós és fotós munkákhoz",
+  "name": "AlexFPV Studio",
+  "short_name": "AlexFPV",
+  "description": "Árajánlatok és munkák – AlexFPV",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

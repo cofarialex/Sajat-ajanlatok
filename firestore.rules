@@ -1,0 +1,29 @@
+rules_version = '2';
+
+// =====================================================
+//  Árajánlat (AlexFPV) – Firestore biztonsági szabályok
+//  Ezt a szöveget a Firebase konzolban kell bemásolni:
+//  Firestore Database -> Rules -> (mindent törölj ki, ezt illeszd be) -> Publish
+//
+//  Csak az alábbi e-mail-címmel belépett felhasználó láthatja és módosíthatja a munkákat.
+//  Ha más e-maillel lépsz be az oldalon, itt is írd át!
+// =====================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner() {
+      return request.auth != null && request.auth.token.email == "alexcmedia1@gmail.com";
+    }
+
+    // Az elmentett árajánlatok
+    match /quotes/{id} {
+      allow read, write: if isOwner();
+    }
+
+    // Minden más tilos
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
